@@ -13,8 +13,6 @@ public:
   : output_( std::move( output ) ) 
   , capacity(output.writer().available_capacity())
   , string_waited_reorder()
-  , first_waited_index(0)
-  , first_unpoped_index(0)
   , first_unassembled_index(0)
   , last_index(UINT64_MAX/2){}
   
@@ -54,8 +52,6 @@ private:
   ByteStream output_; // the Reassembler writes to this ByteStream
   uint64_t capacity;
   std::vector<std::pair<uint64_t,std::string>> string_waited_reorder;
-  uint64_t first_waited_index;
-  uint64_t first_unpoped_index;
   uint64_t first_unassembled_index;
   uint64_t last_index;
 };
