@@ -13,27 +13,17 @@ void Reassembler::insert( uint64_t first_index, std::string data, bool is_last_s
 
     auto it = string_waited_reorder.begin();
     while(it != string_waited_reorder.end() ){
-      if(it -> first <= first_unassembled_index && it -> first + it -> second.size() >= first_unassembled_index){
+      if(it -> first <= first_unassembled_index && it -> first + it -> second.size() > first_unassembled_index){
           uint64_t start_index=first_unassembled_index - it-> first;
           output_.writer().push(it -> second.substr( start_index ));
-          first_unassembled_index+=it -> second.size();
+          first_unassembled_index+=it -> second.size() - start_index;
           it=string_waited_reorder.erase(it);
-      }else{
+      } else if(it -> first + it -> second.size() <= first_unassembled_index) {
+        it=string_waited_reorder.erase(it);
+      } else {
         break;
       }
     }
-
-    // if(!string_waited_reorder.empty() && string_waited_reorder[0].first <= first_unassembled_index /*&& string_waited_reorder[0].first + string_waited_reorder[0].second.size() >= first_unassembled_index*/){
-
-    //     if(string_waited_reorder[0].first + string_waited_reorder[0].second.size() >= first_unassembled_index){
-
-    //       uint64_t start_index=first_unassembled_index - string_waited_reorder[0].first;
-    //       output_.writer().push(string_waited_reorder[0].second.substr( start_index ));
-    //       first_unassembled_index+=string_waited_reorder[0].second.size();
-
-    //     }
-    //     string_waited_reorder.erase(string_waited_reorder.begin());
-    // }
 
     if(is_last_substring) 
       output_.writer().close();
