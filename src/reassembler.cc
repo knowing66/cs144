@@ -11,16 +11,29 @@ void Reassembler::insert( uint64_t first_index, std::string data, bool is_last_s
     output_.writer().push(data.substr(first_unassembled_index-first_index,len));
     first_unassembled_index+=len;
 
-    if(!string_waited_reorder.empty() && string_waited_reorder[0].first <= first_unassembled_index /*&& string_waited_reorder[0].first + string_waited_reorder[0].second.size() >= first_unassembled_index*/){
-      if(string_waited_reorder[0].first + string_waited_reorder[0].second.size() >= first_unassembled_index){
-
-        uint64_t start_index=first_unassembled_index - string_waited_reorder[0].first;
-        output_.writer().push(string_waited_reorder[0].second.substr( start_index ));
-        first_unassembled_index+=string_waited_reorder[0].second.size();
-
+    auto it = string_waited_reorder.begin();
+    while(it != string_waited_reorder.end() ){
+      if(it -> first <= first_unassembled_index && it -> first + it -> second.size() >= first_unassembled_index){
+          uint64_t start_index=first_unassembled_index - it-> first;
+          output_.writer().push(it -> second.substr( start_index ));
+          first_unassembled_index+=it -> second.size();
+          it=string_waited_reorder.erase(it);
+      }else{
+        break;
       }
-      string_waited_reorder.erase(string_waited_reorder.begin());
     }
+
+    // if(!string_waited_reorder.empty() && string_waited_reorder[0].first <= first_unassembled_index /*&& string_waited_reorder[0].first + string_waited_reorder[0].second.size() >= first_unassembled_index*/){
+
+    //     if(string_waited_reorder[0].first + string_waited_reorder[0].second.size() >= first_unassembled_index){
+
+    //       uint64_t start_index=first_unassembled_index - string_waited_reorder[0].first;
+    //       output_.writer().push(string_waited_reorder[0].second.substr( start_index ));
+    //       first_unassembled_index+=string_waited_reorder[0].second.size();
+
+    //     }
+    //     string_waited_reorder.erase(string_waited_reorder.begin());
+    // }
 
     if(is_last_substring) 
       output_.writer().close();
@@ -48,35 +61,41 @@ void Reassembler::insert( uint64_t first_index, std::string data, bool is_last_s
         uint64_t l = first_unassembled_index;
         uint64_t r;
 
-        for(auto it=string_waited_reorder.begin(); it != string_waited_reorder.end(); it++){
+        auto it=string_waited_reorder.begin();
+        while (it != string_waited_reorder.end()){
           r = it->first ;
-          if(first_index > l && first_index + data.size() < r-1 && r-l >1){
-            string_waited_reorder.insert(it,{first_index,data});
-          } else if (first_index <= l && first_index + data.size() >= r-1 && r-l >1){
+          if(first_index > l && first_index + data.size() < r-1 && r-l >= 1){
+            it=string_waited_reorder.insert(it,{first_index,data});
+            it++;
+          } else if (first_index <= l && first_index + data.size() >= r-1 && r-l >= 1){
             uint64_t len = r - l;
-            string_waited_reorder.insert(it,{l,data.substr(l - first_index,len)});
-          } else if (first_index <= l && first_index + data.size() < r-1 && r-l >1){
+            it=string_waited_reorder.insert(it,{l,data.substr(l - first_index,len)});
+            it++;
+          } else if (first_index <= l && first_index + data.size() >= l && first_index + data.size() < r-1 && r-l >= 1){
             uint64_t len = first_index + data.size()-l;
-            string_waited_reorder.insert(it,{l,data.substr(l - first_index,len)});
-          } else if (first_index > l && first_index + data.size() >= r-1 && r-l >1){
+            it=string_waited_reorder.insert(it,{l,data.substr(l - first_index,len)});
+            it++;
+          } else if (first_index > l && first_index <= r-1 && first_index + data.size() >= r-1 && r-l >= 1){
             uint64_t len=r - first_index;
-            string_waited_reorder.insert(it,{first_index,data.substr(0,len)});
+            it=string_waited_reorder.insert(it,{first_index,data.substr(0,len)});
+            it++;
           }
 
           l= it->first + it->second.size();
+          it++;
         }
 
 
-        r = first_unassembled_index + output_.writer().available_capacity();
+        r =first_unassembled_index + output_.writer().available_capacity() ;
         if(first_index > l && first_index + data.size() < r-1){
             string_waited_reorder.push_back({first_index,data});
           } else if (first_index <= l && first_index + data.size() >= r-1){
             uint64_t len = r - l;
             string_waited_reorder.push_back({l,data.substr(l - first_index,len)});
-          } else if (first_index <= l && first_index + data.size() < r-1){
+          } else if (first_index <= l && first_index + data.size() >= l && first_index + data.size() < r-1){
             uint64_t len = first_index + data.size()-l;
             string_waited_reorder.push_back({l,data.substr(l - first_index,len)});
-          } else if (first_index > l && first_index + data.size() >= r-1){
+          } else if (first_index > l && first_index <= r-1 && first_index + data.size() >= r-1){
             uint64_t len=r - first_index;
             string_waited_reorder.push_back({first_index,data.substr(0,len)});
           }
