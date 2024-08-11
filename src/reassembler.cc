@@ -25,7 +25,7 @@ void Reassembler::insert( uint64_t first_index, std::string data, bool is_last_s
       }
     }
 
-    if(is_last_substring) 
+    if(is_last_substring && data.size()<=output_.writer().available_capacity()) 
       output_.writer().close();
 
     if(first_unassembled_index == last_index +1)
@@ -81,9 +81,11 @@ void Reassembler::insert( uint64_t first_index, std::string data, bool is_last_s
             string_waited_reorder.push_back({first_index,data});
           } else if (first_index <= l && first_index + data.size() >= r-1){
             uint64_t len = r - l;
-            string_waited_reorder.push_back({l,data.substr(l - first_index,len)});
+            if(l-first_index <= data.size() - 1)
+              string_waited_reorder.push_back({l,data.substr(l - first_index,len)});
           } else if (first_index <= l && first_index + data.size() >= l && first_index + data.size() < r-1){
             uint64_t len = first_index + data.size()-l;
+            if(l-first_index <= data.size() - 1)
             string_waited_reorder.push_back({l,data.substr(l - first_index,len)});
           } else if (first_index > l && first_index <= r-1 && first_index + data.size() >= r-1){
             uint64_t len=r - first_index;
